@@ -25,7 +25,7 @@ exports.getNovedadesHoy = (req, res) => {
     });
 };
 exports.createNovedad = (req, res) => {
-    const hoy = moment().startOf('day').format('YYYY-MM-DD HH:mm:ss');
+    const hoy = moment().startOf('day').format('YYYY-MM-DD HH:mm:ss')+1;
     const { nombre, novedad } = req.body;
 
     // Validar los datos
