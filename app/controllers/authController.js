@@ -110,3 +110,47 @@ exports.resetPassword = async (req, res) => {
         res.status(500).json({ error: "Error en el servidor", details: err.message });
     }
 };
+// **Cambiar contraseña de usuario**
+exports.changePassword = async (req, res) => {
+    try {
+        const { oldPassword, newPassword } = req.body;
+
+        // Verificar que se proporcionen las contraseñas
+        if (!oldPassword || !newPassword) {
+            return res.status(400).json({ message: "Ambas contraseñas son requeridas." });
+        }
+
+        // Obtener el usuario del token
+        const token = req.headers['authorization']?.split(' ')[1]; // Asumiendo que el token se envía en el encabezado Authorization
+        if (!token) {
+            return res.status(401).json({ message: "No se proporcionó token." });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const userId = decoded.id;
+
+        // Obtener el usuario de la base de datos
+        const [results] = await db.promise().query('SELECT * FROM u154726602_equipos.users WHERE id = ?', [userId]);
+        if (results.length === 0) {
+            return res.status(404).json({ message: "Usuario no encontrado." });
+        }
+
+        const user = results[0];
+
+        // Verificar la contraseña antigua
+        const passwordIsValid = await bcrypt.compare(oldPassword, user.password);
+        if (!passwordIsValid) {
+            return res.status(401).json({ message: "La contraseña antigua es incorrecta." });
+        }
+
+        // Hashear la nueva contraseña
+        const hashedNewPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+        // Actualizar la contraseña en la base de datos
+        await db.promise().query('UPDATE u154726602_equipos.users SET password = ? WHERE id = ?', [hashedNewPassword, userId]);
+
+        res.status(200).json({ message: "Contraseña cambiada correctamente." });
+    } catch (err) {
+        res.status(500).json({ error: "Error en el servidor", details: err.message });
+    }
+};
