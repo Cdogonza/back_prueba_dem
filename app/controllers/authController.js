@@ -75,8 +75,10 @@ exports.resetPassword = async (req, res) => {
     try {
         const { email } = req.body;
 
-        if (!email) {
-            return res.status(400).json({ message: "El correo electrónico es obligatorio." });
+        // Validación básica del formato del correo electrónico
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!email || !emailRegex.test(email)) {
+            return res.status(400).json({ message: "El correo electrónico es obligatorio y debe ser válido." });
         }
 
         const [results] = await db.promise().query('SELECT * FROM u154726602_equipos.users WHERE email = ?', [email]);
@@ -101,12 +103,14 @@ exports.resetPassword = async (req, res) => {
             from: process.env.EMAIL_USER,
             to: email,
             subject: 'Restablecimiento de contraseña',
-            text: `Para restablecer su contraseña, haga clic en el siguiente enlace: ${FRONTEND_URL}/reset-password/${token}`
+            text: `Para restablecer su contraseña, haga clic en el siguiente enlace: ${process.env.FRONTEND_URL}/reset-password/${token}`
         };
 
+        // Enviar el correo electrónico y manejar errores
         await transporter.sendMail(mailOptions);
         res.status(200).json({ message: "Correo de restablecimiento enviado." });
     } catch (err) {
+        console.error(err); // Log del error para depuración
         res.status(500).json({ error: "Error en el servidor", details: err.message });
     }
 };
