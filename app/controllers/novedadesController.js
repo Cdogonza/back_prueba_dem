@@ -27,7 +27,7 @@ exports.getNovedadesHoy = (req, res) => {
 };
 exports.createNovedad = (req, res) => {
     const hoy = moment().startOf('day').format('YYYY-MM-DD HH:mm:ss');
-    const { fecha ,nombre, novedad } = req.body;
+    const { nombre, novedad } = req.body;
 
     // Validar los datos
     if (!nombre || !novedad) {
@@ -35,7 +35,7 @@ exports.createNovedad = (req, res) => {
     }
 
     const query = 'INSERT INTO u154726602_equipos.novedades (fecha, nombre, novedad) VALUES (?, ?, ?)';
-    db.query(query, [fecha, nombre, novedad], (err, results) => {
+    db.query(query, [hoy, nombre, novedad], (err, results) => {
         if (err) return res.status(500).json(err);
         res.status(201).json({ message: 'Novedad creada exitosamente', id: results.insertId });
     });
