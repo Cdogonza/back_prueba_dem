@@ -6,7 +6,7 @@ const tallerController = require('../controllers/tallerController');
 router.get('/taller', tallerController.getAllTaller);
 
 // Crear un nuevo equipo
-router.post('/', tallerController.createTaller);
+router.post('/taller', tallerController.createTaller);
 
 // // Obtener un equipo por ID
 // router.get('/:id', tallerController.getEquipoById);
