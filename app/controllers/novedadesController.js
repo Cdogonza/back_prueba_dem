@@ -26,7 +26,7 @@ exports.getNovedadesHoy = (req, res) => {
     });
 };
 exports.createNovedad = (req, res) => {
-    const hoy = moment().startOf('day').format('YYYY-MM-DD HH:mm:ss');
+    const hoy = moment().subtract(1, 'days').startOf('day').format('YYYY-MM-DD HH:mm:ss');
     console.log(hoy);
     const { nombre, novedad } = req.body;
 
