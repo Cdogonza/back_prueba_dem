@@ -15,7 +15,7 @@ exports.getNovedadesHoy = (req, res) => {
 
     const query = `
         SELECT * FROM u154726602_equipos.novedades 
-        WHERE fecha > ? AND fecha <= ?
+        WHERE fecha >= ? AND fecha < ?
         ORDER BY fecha DESC
     `;
 
