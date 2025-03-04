@@ -11,7 +11,7 @@ exports.getAllNovedades = (req, res) => {
 exports.getNovedadesHoy = (req, res) => {
     const ff = new Date().toISOString().split('T')[0]; // yyyy-MM-DD;
     const hoy = moment().startOf('day').format('YYYY-MM-DD HH:mm:ss');
-    const ayer = moment().subtract(1, 'days').startOf('day').format('YYYY-MM-DD HH:mm:ss');
+    const ayer = moment().subtract(0, 'days').startOf('day').format('YYYY-MM-DD HH:mm:ss');
 
     const query = `
         SELECT * FROM u154726602_equipos.novedades 
