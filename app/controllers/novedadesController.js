@@ -42,7 +42,7 @@ exports.getNovedadesHoy = (req, res) => {
     });
 };
 exports.createNovedad = (req, res) => {
-    const hoy = obtenerFechaHoy();
+    const hoy = obtenerFechaAyer();
    
     const { nombre, novedad } = req.body;
 
