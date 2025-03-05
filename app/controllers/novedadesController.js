@@ -11,7 +11,7 @@ exports.getAllNovedades = (req, res) => {
 
 function obtenerFechaHoy() {
     const today = new Date();
-    today.setDate(today.getDate() - 2);
+    today.setDate(today.getDate());
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0'); // Los meses son 0-indexados
     const day = String(today.getDate()).padStart(2, '0');
@@ -20,7 +20,7 @@ function obtenerFechaHoy() {
 function obtenerFechaAyer() {
     const today = new Date();
     // Restar un día
-    today.setDate(today.getDate() - 3);
+    today.setDate(today.getDate() - 1);
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0'); // Los meses son 0-indexados
     const day = String(today.getDate()).padStart(2, '0');
