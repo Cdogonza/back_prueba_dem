@@ -8,11 +8,27 @@ exports.getAllNovedades = (req, res) => {
         res.json(results);
     });
 };
-exports.getNovedadesHoy = (req, res) => {
-    const ff = new Date().toISOString().split('T')[0]; // yyyy-MM-DD;
-    const hoy = moment().subtract(0, 'days').startOf('day').format('YYYY-MM-DD HH:mm:ss');
-    const ayer = moment().subtract(1, 'days').startOf('day').format('YYYY-MM-DD HH:mm:ss');
 
+function obtenerFechaHoy() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0'); // Los meses son 0-indexados
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+function obtenerFechaAyer() {
+    const today = new Date();
+    // Restar un día
+    today.setDate(today.getDate() - 1);
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0'); // Los meses son 0-indexados
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+exports.getNovedadesHoy = (req, res) => {
+    const ayer = obtenerFechaAyer();
+    const hoy = obtenerFechaHoy();
     const query = `
         SELECT * FROM u154726602_equipos.novedades 
         WHERE fecha > ? AND fecha <= ?
@@ -26,7 +42,7 @@ exports.getNovedadesHoy = (req, res) => {
     });
 };
 exports.createNovedad = (req, res) => {
-    const hoy = moment().subtract(0, 'days').startOf('day').format('YYYY-MM-DD HH:mm:ss');
+    const hoy = obtenerFechaHoy();
    
     const { nombre, novedad } = req.body;
 
