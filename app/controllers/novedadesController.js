@@ -32,8 +32,8 @@ exports.getNovedadesHoy = (req, res) => {
     const hoy = obtenerFechaHoy();
     const query = `
         SELECT * FROM u154726602_equipos.novedades 
-        WHERE fecha > ? AND fecha <= ?
-        ORDER BY fecha DESC
+        WHERE fecha >= CURDATE() - INTERVAL 1 DAY AND fecha < CURDATE() + INTERVAL 1 DAY
+        ORDER BY fecha DESC;
     `;
 
     db.query(query, [ayer, hoy], (err, results) => {

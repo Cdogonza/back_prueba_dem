@@ -23,7 +23,7 @@ setInterval(() => {
         }
         // Aquí no necesitas hacer nada con los resultados
     });
-}, 5000); // Cada 5 segundos
+}, 1000); // Cada 5 segundos
 
 // Exportar el pool para usarlo en otros archivos
 module.exports = db;
