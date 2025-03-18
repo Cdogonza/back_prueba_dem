@@ -8,6 +8,7 @@ const equposRoutes = require('./routes/equipos');
 const novedadesRoutes = require('./routes/novedades');
 const tallerRoutes = require('./routes/taller');
 const mantenmientos = require('./routes/mantenimientos');
+const facturacion = require('./routes/facturacion');
 const e = require('express');
 
 const port = process.env.PORT || 3000;
@@ -55,6 +56,7 @@ app.use('/novedades', novedadesRoutes);
 app.use('/taller', tallerRoutes);
 app.use('/auth', authRoutes);
 app.use('/mantenimientos', mantenmientos);
+app.use('/facturacion', facturacion);
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
