@@ -6,8 +6,8 @@ const novedadesController = require('../controllers/novedadesController');
 router.get('/todas', novedadesController.getAllNovedades);
 
 // Crear un nuevo equipo
-router.get('/hoy', novedadesController.getNovedadesHoy);
+// router.get('/hoy', novedadesController.getNovedadesHoy);
 
-router.post('/', novedadesController.createNovedad);
+// router.post('/', novedadesController.createNovedad);
 
 module.exports = router;

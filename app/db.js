@@ -16,14 +16,21 @@ const promisePool = mysql.createPool({
 });
 
 // Mantener la conexión activa
-// setInterval(() => {
-//     promisePool.query('SELECT 1', (err, results) => {
-//         if (err) {
-//             console.error('Error manteniendo la conexión:', err);
-//         }
-        
-//     });
-// }, 1000); // Cada 5 segundos
+const keepAliveInterval = setInterval(async () => {
+    try {
+        // Ejecutar una consulta simple para mantener la conexión activa
+        const [results] = await promisePool.query('SELECT 1');
+        console.log('Conexión a la base de datos activa:', results);
+    } catch (err) {
+        console.error('Error manteniendo la conexión:', err);
+
+        // Detener el intervalo si hay un error crítico
+        if (err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'ECONNREFUSED') {
+            console.error('Conexión perdida. Deteniendo el intervalo...');
+            clearInterval(keepAliveInterval);
+        }
+    }
+}, 5000); // 300,000 ms = 5 minutos
 
 // Exportar el pool para usarlo en otros archivos
 module.exports = promisePool;
