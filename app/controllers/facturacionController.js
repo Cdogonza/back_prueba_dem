@@ -22,7 +22,7 @@ const facturacionController = {
 
         try {
             const [result] = await promisePool.query(
-                'INSERT INTO u154726602_equipos.facturacion (fecha, empresa, monto) VALUES (?, ?, ?)',
+                'INSERT INTO u154726602_equipos.facturacion (fecha, empresa, monto, estado) VALUES (?, ?, ?, "pendiente")',
                 [fecha, empresa, monto]
             );
             res.status(201).json({ id: result.insertId, fecha, empresa, monto });
