@@ -30,7 +30,7 @@ const keepAliveInterval = setInterval(async () => {
             clearInterval(keepAliveInterval);
         }
     }
-}, 5000); // 300,000 ms = 5 minutos
+}, 100000); // 300,000 ms = 5 minutos
 
 // Exportar el pool para usarlo en otros archivos
 module.exports = promisePool;

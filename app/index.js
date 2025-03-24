@@ -24,7 +24,7 @@ app.use((req, res, next) => {
 });
 app.use(cors({
     origin: ['http://localhost:4200','https://gold-porpoise-471965.hostingersite.com'], // Permitir solicitudes desde este origen
-    methods: 'GET,POST', // Métodos permitidos
+    methods: 'GET,POST,DELETE', // Métodos permitidos
     credentials: true // Permitir credenciales si es necesario
 }));
 

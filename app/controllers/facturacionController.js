@@ -13,7 +13,7 @@ const facturacionController = {
 
     // Insertar una nueva facturación
     insert: async (req, res) => {
-        const { fecha, empresa, monto } = req.body;
+        const { fecha, empresa, monto,estado, observacion } = req.body;
 
         // Validar que todos los campos estén presentes
         if (!fecha || !empresa || !monto) {
@@ -22,10 +22,28 @@ const facturacionController = {
 
         try {
             const [result] = await promisePool.query(
-                'INSERT INTO u154726602_equipos.facturacion (fecha, empresa, monto, estado) VALUES (?, ?, ?, "pendiente")',
-                [fecha, empresa, monto]
+                'INSERT INTO u154726602_equipos.facturacion (fecha, empresa, monto, estado,observacion) VALUES (?, ?, ?, ?,?)',
+                [fecha, empresa, monto, estado, observacion]
             );
-            res.status(201).json({ id: result.insertId, fecha, empresa, monto });
+            res.status(201).json({ id: result.insertId, fecha, empresa, monto,estado, observacion });
+        } catch (error) {
+            res.status(500).json({ error: `Error en la base de datos: ${error.message}` });
+        }
+    },
+    insertEntrada: async (req, res) => {
+        const { fecha, monto } = req.body;
+
+        // Validar que todos los campos estén presentes
+        if (!fecha || !monto) {
+            return res.status(400).json({ error: 'Todos los campos (fecha, monto) son requeridos' });
+        }
+
+        try {
+            const [result] = await promisePool.query(
+                'INSERT INTO u154726602_equipos.entrada (fecha, monto) VALUES (?, ?)',
+                [fecha, monto]
+            );
+            res.status(201).json({ id: result.insertId, fecha, monto });
         } catch (error) {
             res.status(500).json({ error: `Error en la base de datos: ${error.message}` });
         }
@@ -33,16 +51,16 @@ const facturacionController = {
 
     // Actualizar una facturación existente
     update: async (req, res) => {
-        const { idfacturacion, fecha, empresa, monto } = req.body;
+        const { idfacturacion, fecha, empresa, monto,estado,  observacion } = req.body;
 
         // Validar que todos los campos estén presentes
-        if (!idfacturacion || !fecha || !empresa || !monto) {
-            return res.status(400).json({ error: 'Todos los campos (idfacturacion, fecha, empresa, monto) son requeridos' });
+        if (!idfacturacion || !fecha || !empresa || !monto|| !estado|| !observacion) {
+            return res.status(400).json({ error: 'Todos los campos (idfacturacion, fecha, empresa, monto, estado, observacion) son requeridos' });
         }
 
         try {
             const [result] = await promisePool.query(
-                'UPDATE u154726602_equipos.facturacion SET fecha = ?, empresa = ?, monto = ? WHERE idfacturacion = ?',
+                'UPDATE u154726602_equipos.facturacion SET fecha = ?, empresa = ?, monto = ?,estado = ?,  observacion =? WHERE idfacturacion = ?',
                 [fecha, empresa, monto, idfacturacion]
             );
             if (result.affectedRows === 0) {
@@ -56,20 +74,22 @@ const facturacionController = {
 
     // Eliminar una facturación
     delete: async (req, res) => {
-        const { idfacturacion } = req.body;
-
-        // Validar que el ID esté presente
+        const { idfacturacion } = req.params;
+        console.log('ID recibido:', idfacturacion); // Depuración
+    
         if (!idfacturacion) {
             return res.status(400).json({ error: 'El campo idfacturacion es requerido' });
         }
-
+    
         try {
             const [result] = await promisePool.query('DELETE FROM u154726602_equipos.facturacion WHERE idfacturacion = ?', [idfacturacion]);
+            console.log('Resultado de la consulta:', result); // Depuración
             if (result.affectedRows === 0) {
                 return res.status(404).json({ error: 'Facturación no encontrada' });
             }
             res.status(200).json({ message: 'Facturación eliminada correctamente' });
         } catch (error) {
+            console.error('Error en la base de datos:', error); // Depuración
             res.status(500).json({ error: `Error en la base de datos: ${error.message}` });
         }
     },
@@ -93,6 +113,29 @@ const facturacionController = {
                 SELECT SUM(monto) AS total 
                 FROM u154726602_equipos.facturacion 
                 WHERE estado LIKE '%pendiente%'
+            `);
+            res.status(200).json({ total: rows[0].total || 0 });
+        } catch (error) {
+            res.status(500).json({ error: `Error en la base de datos: ${error.message}` });
+        }
+    },
+    totalEntrada: async (req, res) => {
+        try {
+            const [rows] = await promisePool.query(`
+                SELECT SUM(monto) AS total 
+                FROM u154726602_equipos.entrada 
+            `);
+            res.status(200).json({ total: rows[0].total || 0 });
+        } catch (error) {
+            res.status(500).json({ error: `Error en la base de datos: ${error.message}` });
+        }
+    },
+    totalCaja: async (req, res) => {
+        try {
+            const [rows] = await promisePool.query(`
+                SELECT 
+    (SELECT COALESCE(SUM(monto), 0) FROM u154726602_equipos.entrada) -
+    (SELECT COALESCE(SUM(monto), 0) FROM u154726602_equipos.facturacion WHERE estado LIKE '%pagado%') AS total;
             `);
             res.status(200).json({ total: rows[0].total || 0 });
         } catch (error) {
