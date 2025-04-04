@@ -1,5 +1,6 @@
 const db = require('../db');
 const bcrypt = require('bcryptjs');
+const e = require('express');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 
@@ -51,9 +52,11 @@ const authController = {
             // Respuesta de error
             res.status(500).json({
                 error: "Error en el servidor",
-                details: process.env.NODE_ENV === 'development' ? err.message : 'Internal Server Error'
+                details: process.env.NODE_ENV === 'development' ? err.message : 'Internal Server Error',
+              
             });
         }
+       
     },
 
     // **Registro de usuario**
