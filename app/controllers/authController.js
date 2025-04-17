@@ -2,6 +2,7 @@ const db = require('../db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
+require('dotenv').config();
 
 const SALT_ROUNDS = 10; // Seguridad en bcrypt
 const TOKEN_EXPIRATION = '24h'; // Tiempo de expiración del token
@@ -10,51 +11,99 @@ const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4200';
 const authController = {
     login: async (req, res) => {
         try {
-            const { username, password } = req.body;
-
-            // Validación de entrada
-            if (!username || !password) {
-                return res.status(400).json({ message: "Usuario y contraseña son requeridos." });
-            }
-
-            // Consulta a la base de datos
-            const [results] = await db.query(
-                'SELECT id, username, email, password FROM u154726602_equipos.users WHERE username = ?',
-                [username]
-            );
-
-            if (results.length === 0) {
-                return res.status(404).json({ message: "Usuario no encontrado." });
-            }
-
-            const user = results[0];
-
-            // Verificar contraseña
-            const passwordIsValid = await bcrypt.compare(password, user.password);
-            if (!passwordIsValid) {
-                return res.status(401).json({ auth: false, token: null, message: "Contraseña incorrecta." });
-            }
-
-            // Generar token JWT
-            const token = jwt.sign(
-                { id: user.id, username: user.username, email: user.email },
-                process.env.JWT_SECRET,
-                { expiresIn: TOKEN_EXPIRATION }
-            );
-
-            // Respuesta exitosa
-            res.status(200).json({ auth: true, token });
-        } catch (err) {
-            // Log del error en producción
-            console.error('Error en authController.login:', err);
-
-            // Respuesta de error
-            res.status(500).json({
-                error: "Error en el servidor",
-                details: process.env.NODE_ENV === 'development' ? err.message : 'Internal Server Error'
+          const { username, password } = req.body;
+      
+          // Validación de entrada
+          if (!username?.trim() || !password?.trim()) {
+            return res.status(400).json({
+              success: false,
+              message: "Usuario y contraseña son requeridos."
             });
+          }
+      
+          // Consulta a la base de datos
+          let results;
+          try {
+            [results] = await db.query(
+              'SELECT id, username, email, password FROM u154726602_equipos.users WHERE username = ?',
+              [username.trim()]
+            );
+          } catch (dbError) {
+            console.error('Error en consulta DB:', dbError);
+            return res.status(500).json({
+              success: false,
+              message: "Error al autenticar usuario."
+            });
+          }
+      
+          if (!results || results.length === 0) {
+            return res.status(404).json({
+              success: false,
+              message: "Usuario no encontrado."
+            });
+          }
+      
+          const user = results[0];
+      
+          // Verificación de contraseña
+          let passwordIsValid;
+          try {
+            passwordIsValid = await bcrypt.compare(password, user.password);
+          } catch (bcryptError) {
+            console.error('Error en bcrypt:', bcryptError);
+            return res.status(500).json({
+              success: false,
+              message: "Error al verificar la contraseña."
+            });
+          }
+      
+          if (!passwordIsValid) {
+            return res.status(401).json({
+              success: false,
+              message: "Credenciales inválidas."
+            });
+          }
+      
+          // Verificación de JWT_SECRET
+          const jwtSecret = process.env.JWT_SECRET;
+          if (!jwtSecret) {
+            console.error('JWT_SECRET no configurado en variables de entorno.');
+            return res.status(500).json({
+              success: false,
+              message: "Error de configuración del servidor."
+            });
+          }
+      
+          const token = jwt.sign(
+            {
+              id: user.id,
+              username: user.username,
+              email: user.email
+            },
+            jwtSecret,
+            { expiresIn: process.env.TOKEN_EXPIRATION || process.env.TOKEN_EXPIRATION || '1h' }
+          );
+      
+          // Éxito
+          return res.status(200).json({
+            success: true,
+            token,
+            user: {
+              id: user.id,
+              username: user.username,
+              email: user.email
+            }
+          });
+      
+        } catch (err) {
+          console.error('Error en authController.login:', err);
+          return res.status(500).json({
+            success: false,
+            message: "Error interno del servidor.",
+            ...(process.env.NODE_ENV === 'development' && { error: err.message })
+          });
         }
-    },
+        },
 
     // **Registro de usuario**
     register: async (req, res) => {
@@ -133,48 +182,57 @@ const authController = {
         }
     },
     //Cambio password
-    changePassword : async (req, res) => {
-            try {
-                const { oldPassword, newPassword } = req.body;
-        
-                // Verificar que se proporcionen las contraseñas
-                if (!oldPassword || !newPassword) {
-                    return res.status(400).json({ message: "Ambas contraseñas son requeridas." });
-                }
-        
-                // Obtener el usuario del token
-                const token = req.headers['authorization']?.split(' ')[1]; // Asumiendo que el token se envía en el encabezado Authorization
-                if (!token) {
-                    return res.status(401).json({ message: "No se proporcionó token." });
-                }
-        
-                const decoded = jwt.verify(token, process.env.JWT_SECRET);
-                const userId = decoded.id;
-        
-                // Obtener el usuario de la base de datos
-                const [results] = await db.query('SELECT * FROM u154726602_equipos.users WHERE id = ?', [userId]);
-                if (results.length === 0) {
-                    return res.status(404).json({ message: "Usuario no encontrado." });
-                }
-        
-                const user = results[0];
-        
-                // Verificar la contraseña antigua
-                const passwordIsValid = await bcrypt.compare(oldPassword, user.password);
-                if (!passwordIsValid) {
-                    return res.status(401).json({ message: "La contraseña antigua es incorrecta." });
-                }
-        
-                // Hashear la nueva contraseña
-                const hashedNewPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
-        
-                // Actualizar la contraseña en la base de datos
-                await db.query('UPDATE u154726602_equipos.users SET password = ? WHERE id = ?', [hashedNewPassword, userId]);
-        
-                res.status(200).json({ message: "Contraseña cambiada correctamente." });
-            } catch (err) {
-                res.status(500).json({ error: "Error en el servidor", details: err.message });
+    changePassword: async (req, res) => {
+        try {
+            const { oldPassword, newPassword } = req.body;
+    
+            // Validación de entrada
+            if (!oldPassword?.trim() || !newPassword?.trim()) {
+                return res.status(400).json({ message: "Ambas contraseñas son requeridas." });
             }
+    
+            // Verificar que el token exista
+            const token = req.headers['authorization']?.split(' ')[1];
+            if (!token) {
+                return res.status(401).json({ message: "No se proporcionó token." });
+            }
+    
+            // Verificar existencia de JWT_SECRET
+            if (!process.env.JWT_SECRET) {
+                return res.status(500).json({ message: "JWT_SECRET no está configurado." });
+            }
+    
+            // Decodificar token
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            const userId = decoded.id;
+    
+            // Buscar usuario
+            const [results] = await db.query('SELECT * FROM u154726602_equipos.users WHERE id = ?', [userId]);
+            if (results.length === 0) {
+                return res.status(404).json({ message: "Usuario no encontrado." });
+            }
+    
+            const user = results[0];
+    
+            // Verificar contraseña anterior
+            const passwordIsValid = await bcrypt.compare(oldPassword, user.password);
+            if (!passwordIsValid) {
+                return res.status(401).json({ message: "La contraseña antigua es incorrecta." });
+            }
+    
+            // Hashear nueva contraseña
+            const SALT_ROUNDS = parseInt(process.env.SALT_ROUNDS || '10');
+            const hashedNewPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    
+            // Actualizar en base de datos
+            await db.query('UPDATE u154726602_equipos.users SET password = ? WHERE id = ?', [hashedNewPassword, userId]);
+    
+            return res.status(200).json({ message: "Contraseña cambiada correctamente." });
+    
+        } catch (err) {
+            console.error('Error en changePassword:', err);
+            return res.status(500).json({ error: "Error en el servidor", details: err.message });
         }
+    }
 };
 module.exports = authController;

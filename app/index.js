@@ -11,9 +11,9 @@ const mantenmientos = require('./routes/mantenimientos');
 const facturacion = require('./routes/facturacion');
 const e = require('express');
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 dotenv.config();
-app.get('/', (req, res) => {
+app.get('/api', (req, res) => {
     res.send('Hello World!');
 });
 
@@ -23,7 +23,7 @@ app.use((req, res, next) => {
     next();
 });
 app.use(cors({
-    origin: ['http://localhost:4200','https://gold-porpoise-471965.hostingersite.com'], // Permitir solicitudes desde este origen
+    origin: ['http://localhost:4200','http://10.50.50.50'], // Permitir solicitudes desde este origen
     methods: 'GET,POST,DELETE', // Métodos permitidos
     credentials: true // Permitir credenciales si es necesario
 }));
@@ -51,13 +51,14 @@ db.connect(err => {
     console.log('Conectado a la base de datos MySQL');
 });
 
-app.use('/equipos', equposRoutes);
-app.use('/novedades', novedadesRoutes);
-app.use('/taller', tallerRoutes);
-app.use('/auth', authRoutes);
-app.use('/mantenimientos', mantenmientos);
-app.use('/facturacion', facturacion);
+app.use('/api/equipos', equposRoutes);
+app.use('/api/novedades', novedadesRoutes);
+app.use('/api/taller', tallerRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/mantenimientos', mantenmientos);
+app.use('/api/facturacion', facturacion);
 
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+app.listen(port,'0.0.0.0', () => {
+    console.log('Backend escuchando en http://0.0.0.0:3001');
 });
+//172.18.21.%
