@@ -281,6 +281,29 @@ const authController = {
             console.error('Error en newPassword:', err);
             return res.status(500).json({ error: "Error en el servidor", details: err.message });
         }
+    },
+    deleteUser: async (req, res) => {
+        try {
+            const { id } = req.body;
+            console.log(id)
+            await db.query('DELETE FROM u154726602_equipos.users WHERE id = ?', [id]);
+            res.status(200).json({ message: "Usuario eliminado correctamente." });
+        } catch (err) {
+            console.error('Error en deleteUser:', err);
+            res.status(500).json({ error: "Error en el servidor", details: err.message });
+        }
+    },
+    updateUser: async (req, res) => {
+        try {
+            const { username, email } = req.body.user;
+            const {id} = req.params;
+
+            await db.query('UPDATE u154726602_equipos.users SET username = ?, email = ? WHERE id = ?', [username, email, id]);
+            res.status(200).json({ message: "Usuario actualizado correctamente." });
+        } catch (err) {
+            console.error('Error en updateUser:', err);
+            res.status(500).json({ error: "Error en el servidor", details: err.message });
+        }
     }
 };
 module.exports = authController;
