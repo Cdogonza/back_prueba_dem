@@ -109,11 +109,11 @@ const authController = {
     // **Registro de usuario**
     register: async (req, res) => {
         try {
-            const { username, password, email } = req.body;
+            const { username, password, email } = req.body.user;
 
-            if (!username || !password || !email) {
-                return res.status(400).json({ message: "Todos los campos son obligatorios." });
-            }
+            // if (!username || !password || !email) {
+            //     return res.status(400).json({ message: "Todos los campos son obligatorios." });
+            // }
 
             // Verificar si el usuario ya existe
             const [existingUser] = await db.query(
@@ -141,8 +141,8 @@ const authController = {
     },
     resetPassword : async (req, res) => {
         try {
-            const { email } = req.body;
-    
+            const { email } = req.body.email;
+    console.log(email)
             // Validación básica del formato del correo electrónico
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!email || !emailRegex.test(email)) {
@@ -171,7 +171,7 @@ const authController = {
                 from: process.env.EMAIL_USER,
                 to: email,
                 subject: 'Restablecimiento de contraseña',
-                text: `Para restablecer su contraseña, haga clic en el siguiente enlace: ${process.env.FRONTEND_URL}/reset-password/${token}`
+                text: `Para restablecer su contraseña, haga clic en el siguiente enlace: ${process.env.FRONTEND_URL}/new-password/${token}`
             };
     
             // Enviar el correo electrónico y manejar errores
@@ -232,6 +232,53 @@ const authController = {
     
         } catch (err) {
             console.error('Error en changePassword:', err);
+            return res.status(500).json({ error: "Error en el servidor", details: err.message });
+        }
+    },
+    getUsers : async (req, res) => {
+        try {
+            const [results] = await db.query('SELECT id, username, email FROM u154726602_equipos.users');
+            if (results.length === 0) {
+                return res.status(404).json({ message: 'No se encontraron usuarios.' });
+            }
+            res.json(results);
+        } catch (err) {
+            console.error('Error en getUsers:', err);
+            res.status(500).json({
+                error: 'Error en el servidor',
+                details: process.env.NODE_ENV === 'development' ? err.stack : 'Internal Server Error'
+            });
+        }
+    },
+    newPassword: async (req, res) => {
+        try {
+            const  token= req.body.token;
+            const newPassword = req.body.password;
+
+            // Validación de entrada
+            if (!token || !newPassword) {
+                return res.status(400).json({ message: "Token y nueva contraseña son requeridos." });
+            }
+    
+            // Verificar existencia de JWT_SECRET
+            if (!process.env.JWT_SECRET) {
+                return res.status(500).json({ message: "JWT_SECRET no está configurado." });
+            }
+    
+            // Decodificar token
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            const userId = decoded.id;
+    
+            // Hashear nueva contraseña
+            const hashedNewPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    
+            // Actualizar en base de datos
+            await db.query('UPDATE u154726602_equipos.users SET password = ? WHERE id = ?', [hashedNewPassword, userId]);
+    
+            return res.status(200).json({ message: "Contraseña actualizada correctamente." });
+    
+        } catch (err) {
+            console.error('Error en newPassword:', err);
             return res.status(500).json({ error: "Error en el servidor", details: err.message });
         }
     }

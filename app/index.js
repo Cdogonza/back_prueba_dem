@@ -58,6 +58,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/mantenimientos', mantenmientos);
 app.use('/api/facturacion', facturacion);
 
+
 app.listen(port,'0.0.0.0', () => {
     console.log('Backend escuchando en http://0.0.0.0:3001');
 });
