@@ -31,20 +31,62 @@ const facturacionController = {
         }
     },
     insertEntrada: async (req, res) => {
-        const { fecha, monto } = req.body;
-
-        // Validar que todos los campos estén presentes
-        if (!fecha || !monto) {
-            return res.status(400).json({ error: 'Todos los campos (fecha, monto) son requeridos' });
+        const { id, monto,fecha, username, motivo } = req.body.entrada;
+        if (!fecha || !monto|| !motivo || !username) {
+            return res.status(400).json({ error: 'Todos los campos (fecha, monto, username, motivo) son requeridos' });
         }
 
         try {
             const [result] = await promisePool.query(
-                'INSERT INTO u154726602_equipos.entrada (fecha, monto) VALUES (?, ?)',
-                [fecha, monto]
+                'INSERT INTO u154726602_equipos.entrada (fecha, monto, username, motivo) VALUES (?, ?, ?, ?)',
+                [fecha, monto, username, motivo]
             );
-            res.status(201).json({ id: result.insertId, fecha, monto });
+            res.status(201).json({ fecha, monto, username, motivo });
         } catch (error) {
+            res.status(500).json({ error: `Error en la base de datos: ${error.message}` });
+        }
+    },
+    updateEntrada: async (req, res) => {
+        const { id, monto,fecha, username, motivo } = req.body.entrada;
+       
+        const identrada = req.params.identrada; // ID de la entrada a actualizar
+        try{
+            const [result] = await promisePool.query(
+                'UPDATE u154726602_equipos.entrada SET fecha = ?, monto = ?, username = ?, motivo = ? WHERE identrada = ?',
+                [fecha, monto, username, motivo, identrada]
+            );
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ error: 'Entrada no encontrada o ningún cambio aplicado' });
+            }
+
+            // Devuelve el objeto actualizado (opcional)
+            const [updatedRow] = await promisePool.query(
+                'SELECT * FROM u154726602_equipos.entrada WHERE identrada = ?',
+                [identrada]
+            );
+
+            res.status(200).json(updatedRow[0]);
+        }
+        catch (error) {
+            console.error('Error al actualizar entrada:', error);
+            res.status(500).json({ error: 'Error interno del servidor' });
+        }
+
+    },
+    deleteEntrada: async (req, res) => {
+        const { identrada } = req.params;
+
+        try {
+            const [result] = await promisePool.query('DELETE FROM u154726602_equipos.entrada WHERE identrada = ?', [identrada]);
+            console.log('Resultado de la consulta:', result); // Depuración
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ error: 'Entrada no encontrada' });
+            }
+            res.status(200).json({ message: 'Entrada eliminada correctamente' });
+        }
+        catch (error) { 
+            console.error('Error en la base de datos:', error); // Depuración
             res.status(500).json({ error: `Error en la base de datos: ${error.message}` });
         }
     },
