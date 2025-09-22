@@ -2,23 +2,26 @@
 const db = require('../db.js'); // Asegúrate de crear un archivo db.js para manejar la conexión
 
 const url_base = process.env.NODE_ENV === 'development' ? "u154726602_equipos_test" : "u154726602_equipos";
-const novedadesController = {
-    // Obtener todas las novedades
-    getAllNovedades: async (req, res) => {
+
+const documentosController = {
+
+    // Obtener todos los documentos
+    getAllDocumentos: async (req, res) => {
         try {
             // Usar await para manejar la promesa
-            const [results] = await db.query(`SELECT * FROM ${url_base}.novedades ORDER BY fecha DESC`);
+            const [results] = await db.query(`SELECT * FROM ${url_base}.documentos ORDER BY fecha DESC`);
 
             // Si no hay resultados
             if (results.length === 0) {
-                return res.status(404).json({ message: 'No se encontraron novedades.' });
+                return res.status(404).json({ message: 'No se encontraron documentos.' });
             }
 
             // Respuesta exitosa
             res.json(results);
         } catch (err) {
-            console.error('Error en getAllNovedades:', err);
+            console.error('Error en getAllDocumentos:', err);
 
+            // Respuesta de error
             // Respuesta de error
             res.status(500).json({
                 error: 'Error en el servidor',
@@ -26,12 +29,12 @@ const novedadesController = {
             });
         }
     },
-    getNovedadesHoy : async (req, res) => {
+    getDocumentosHoy : async (req, res) => {
         try {
     
             const [results] = await db.query(`
 SELECT * 
-FROM ${url_base}.novedades 
+FROM ${url_base}.documentos 
 WHERE fecha >= CURDATE() - INTERVAL 1 DAY 
   AND fecha < CURDATE() + INTERVAL 1 DAY
 ORDER BY fecha DESC;
@@ -48,26 +51,20 @@ ORDER BY fecha DESC;
             });
         }
     },
-    createNovedad: async (req, res) => {
+    createDocumentos : async (req, res) => {
         try {
             const hoy = obtenerFechaHoy();
-            const { nombre, novedad } = req.body;
+            const {  nombre, documento, matricula, procedencia, asunto, seccion } = req.body;
+            const query = `INSERT INTO ${url_base}.documentos (fecha, nombre, documento, matricula, procedencia, asunto, seccion) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+            const values = [hoy, nombre, documento, matricula, procedencia, asunto, seccion];
 
-            // Validar campos requeridos
-            if (!nombre || !novedad) {
-                return res.status(400).json({ message: 'Todos los campos son requeridos' });
-            }
-
-            // Definir la consulta SQL
-            const query = `INSERT INTO ${url_base}.novedades (fecha, nombre, novedad) VALUES (?, ?, ?)`;
-
-            // Ejecutar la consulta usando promesas
-            const [results] = await db.query(query, [hoy, nombre, novedad]);
+            // Usar await para manejar la promesa
+            const [result] = await db.query(query, values);
 
             // Respuesta exitosa
-            res.status(201).json({ message: 'Novedad creada exitosamente', id: results.insertId });
+            res.status(201).json({ message: 'Documento creado exitosamente'});
         } catch (err) {
-            console.error('Error en createNovedad:', err);
+            console.error('Error en createDocumentos:', err);
 
             // Respuesta de error
             res.status(500).json({
@@ -77,9 +74,7 @@ ORDER BY fecha DESC;
         }
     }
 };
-
-module.exports = novedadesController;
-
+module.exports = documentosController;
 function obtenerFechaHoy() {
     const today = new Date();
     today.setDate(today.getDate());
@@ -88,6 +83,3 @@ function obtenerFechaHoy() {
     const day = String(today.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
 }
-
-        
-

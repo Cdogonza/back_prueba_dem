@@ -141,8 +141,9 @@ const authController = {
     },
     resetPassword : async (req, res) => {
         try {
-            const { email } = req.body.email;
-    console.log(email)
+            // Obtener email de params o body
+
+            const {email} = req.params;
             // Validación básica del formato del correo electrónico
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!email || !emailRegex.test(email)) {
@@ -156,27 +157,18 @@ const authController = {
             }
     
             const user = results[0];
-            const token = jwt.sign({ id: user.id, username: user.username, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    
-            // Configurar el transportador de nodemailer
-            const transporter = nodemailer.createTransport({
-                service: 'gmail',
-                auth: {
-                    user: process.env.EMAIL_USER,
-                    pass: process.env.EMAIL_PASS
-                }
+            
+            // Resetear contraseña a "123456"
+            const defaultPassword = "123456";
+            const hashedPassword = await bcrypt.hash(defaultPassword, SALT_ROUNDS);
+            
+            // Actualizar la contraseña en la base de datos
+            await db.query('UPDATE u154726602_equipos.users SET password = ? WHERE email = ?', [hashedPassword, email]);
+            
+            res.status(200).json({ 
+                message: "Contraseña reseteada correctamente a '123456'.",
+                success: true
             });
-    
-            const mailOptions = {
-                from: process.env.EMAIL_USER,
-                to: email,
-                subject: 'Restablecimiento de contraseña',
-                text: `Para restablecer su contraseña, haga clic en el siguiente enlace: ${process.env.FRONTEND_URL}/new-password/${token}`
-            };
-    
-            // Enviar el correo electrónico y manejar errores
-            await transporter.sendMail(mailOptions);
-            res.status(200).json({ message: "Correo de restablecimiento enviado." });
         } catch (err) {
             console.error(err); // Log del error para depuración
             res.status(500).json({ error: "Error en el servidor", details: err.message });
@@ -235,6 +227,25 @@ const authController = {
             return res.status(500).json({ error: "Error en el servidor", details: err.message });
         }
     },
+    changePasswordDefault: async (req, res) => {
+
+        try {
+            const { id } = req.params; // Obtener el ID del usuario desde los parámetros de la URL
+            console.log(id)
+            const SALT_ROUNDS = parseInt(process.env.SALT_ROUNDS || '10');
+            const hashedNewPassword = await bcrypt.hash('123456', SALT_ROUNDS);
+            await db.query('UPDATE u154726602_equipos.users SET password = ? WHERE id = ?', [hashedNewPassword, id]);
+    
+            return res.status(200).json({ message: "Contraseña cambiada correctamente." });
+
+
+        }catch (err) {
+            console.error('Error en changePasswordDefault:', err);
+            return res.status(500).json({ error: "Error en el servidor", details: err.message });
+        }
+        // Validación de entrada
+
+      },
     getUsers : async (req, res) => {
         try {
             const [results] = await db.query('SELECT id, username, email FROM u154726602_equipos.users');

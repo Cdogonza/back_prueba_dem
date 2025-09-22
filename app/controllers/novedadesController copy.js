@@ -1,7 +1,7 @@
 //NOVEDADES
 const db = require('../db.js'); // Asegúrate de crear un archivo db.js para manejar la conexión
-
 const url_base = process.env.NODE_ENV === 'development' ? "u154726602_equipos_test" : "u154726602_equipos";
+
 const novedadesController = {
     // Obtener todas las novedades
     getAllNovedades: async (req, res) => {

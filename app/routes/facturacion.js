@@ -13,6 +13,10 @@ router.post('/updateEstado', facturacionController.updateEstado);
 router.delete('/delete/:idfacturacion', facturacionController.delete);
 router.post('/cerrar-mes', facturacionController.cerrarMes);
 router.post('/cerrarCaja', facturacionController.cerrarCaja);
+router.post('/updatePrioridad', facturacionController.updatePriority);
+router.post('/totalCajaPrioritario', facturacionController.totalCajaPrioritario);
+
+
 //ENTRADAS
 
 router.post('/getAllEntradas', facturacionController.getAllEntradas);

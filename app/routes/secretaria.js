@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const tallerController = require('../controllers/tallerController');
+const secretaria = require('../controllers/secretariaController');
 
 // Obtener todos los equipos
-router.get('/taller', tallerController.getAllTaller);
+router.get('/', secretaria.getAllTaller);
 
 // Crear un nuevo equipo
-router.post('/taller', tallerController.createTaller);
+router.post('/taller', secretaria.getTallerbyId);
 
 // // Obtener un equipo por ID
 // router.get('/:id', tallerController.getEquipoById);

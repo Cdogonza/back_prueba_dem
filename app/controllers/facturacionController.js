@@ -1,13 +1,33 @@
 const promisePool = require('../db'); // Asegúrate de que este archivo exporte una instancia de mysql2/promise
-
+const url_base = process.env.NODE_ENV === 'development' ? "u154726602_equipos_test" : "u154726602_equipos";
 const facturacionController = {
     // Obtener todas las facturaciones
     getAll: async (req, res) => {
         try {
-            const [rows] = await promisePool.query('SELECT * FROM u154726602_equipos.facturacion');
+            const [rows] = await promisePool.query(`SELECT * FROM ${url_base}.facturacion ORDER BY prioridad DESC`);
             res.status(200).json(rows);
         } catch (error) {
             res.status(500).json({ error: `Error en la base de datos: ${error.message}` });
+        }
+    },
+    updatePriority: async (req, res) => {
+        const { idfacturacion, prioridad } = req.body;
+         //const idfacturacion = req.params.idfacturacion;
+         console.log('ID recibido:', idfacturacion); // Depuración
+         console.log('Prioridad recibida:', prioridad); // Depuración
+        try {
+            const [result] = await promisePool.query(
+                `UPDATE ${url_base}.facturacion SET prioridad = ? WHERE idfacturacion = ?`,
+                [prioridad, idfacturacion]
+            );
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ error: 'Facturación no encontrada o ningún cambio aplicado' });
+            }
+
+
+        } catch (error) {
+            console.error('Error al actualizar prioridad:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
         }
     },
 
@@ -22,7 +42,7 @@ const facturacionController = {
 
         try {
             const [result] = await promisePool.query(
-                'INSERT INTO u154726602_equipos.facturacion (fecha, empresa, monto, estado,observacion) VALUES (?, ?, ?, ?,?)',
+                `INSERT INTO ${url_base}.facturacion (fecha, empresa, monto, estado,observacion) VALUES (?, ?, ?, ?,?)`,
                 [fecha, empresa, monto, estado, observacion]
             );
             res.status(201).json({ id: result.insertId, fecha, empresa, monto, estado, observacion });
@@ -38,7 +58,7 @@ const facturacionController = {
 
         try {
             const [result] = await promisePool.query(
-                'INSERT INTO u154726602_equipos.entrada (fecha, monto, username, motivo) VALUES (?, ?, ?, ?)',
+                `INSERT INTO ${url_base}.entrada (fecha, monto, username, motivo) VALUES (?, ?, ?, ?)`,
                 [fecha, monto, username, motivo]
             );
             res.status(201).json({ fecha, monto, username, motivo });
@@ -52,7 +72,7 @@ const facturacionController = {
         const identrada = req.params.identrada; // ID de la entrada a actualizar
         try{
             const [result] = await promisePool.query(
-                'UPDATE u154726602_equipos.entrada SET fecha = ?, monto = ?, username = ?, motivo = ? WHERE identrada = ?',
+                `UPDATE ${url_base}.entrada SET fecha = ?, monto = ?, username = ?, motivo = ? WHERE identrada = ?`,
                 [fecha, monto, username, motivo, identrada]
             );
 
@@ -62,7 +82,7 @@ const facturacionController = {
 
             // Devuelve el objeto actualizado (opcional)
             const [updatedRow] = await promisePool.query(
-                'SELECT * FROM u154726602_equipos.entrada WHERE identrada = ?',
+                `SELECT * FROM ${url_base}.entrada WHERE identrada = ?`,
                 [identrada]
             );
 
@@ -75,10 +95,10 @@ const facturacionController = {
 
     },
     deleteEntrada: async (req, res) => {
-        const { identrada } = req.params;
+        const { identrada } = req.params;``
 
         try {
-            const [result] = await promisePool.query('DELETE FROM u154726602_equipos.entrada WHERE identrada = ?', [identrada]);
+            const [result] = await promisePool.query(`DELETE FROM ${url_base}.entrada WHERE identrada = ?`, [identrada]);
             console.log('Resultado de la consulta:', result); // Depuración
             if (result.affectedRows === 0) {
                 return res.status(404).json({ error: 'Entrada no encontrada' });
@@ -105,7 +125,7 @@ const facturacionController = {
 
         try {
             const [result] = await promisePool.query(
-                'UPDATE u154726602_equipos.facturacion SET fecha = ?, empresa = ?, monto = ?, estado = ?, observacion = ? WHERE idfacturacion = ?',
+                `UPDATE ${url_base}.facturacion SET fecha = ?, empresa = ?, monto = ?, estado = ?, observacion = ? WHERE idfacturacion = ?`,
                 [fecha, empresa, monto, estado, observacion || null, idfacturacion] // observacion puede ser null
             );
 
@@ -115,7 +135,7 @@ const facturacionController = {
 
             // Devuelve el objeto actualizado (opcional)
             const [updatedRow] = await promisePool.query(
-                'SELECT * FROM u154726602_equipos.facturacion WHERE idfacturacion = ?',
+                `SELECT * FROM ${url_base}.facturacion WHERE idfacturacion = ?`,
                 [idfacturacion]
             );
 
@@ -137,7 +157,7 @@ const facturacionController = {
         }
 
         try {
-            const [result] = await promisePool.query('DELETE FROM u154726602_equipos.facturacion WHERE idfacturacion = ?', [idfacturacion]);
+            const [result] = await promisePool.query(`DELETE FROM ${url_base}.facturacion WHERE idfacturacion = ?`, [idfacturacion]);
             console.log('Resultado de la consulta:', result); // Depuración
             if (result.affectedRows === 0) {
                 return res.status(404).json({ error: 'Facturación no encontrada' });
@@ -154,7 +174,7 @@ const facturacionController = {
         try {
             const [rows] = await promisePool.query(`
                 SELECT SUM(monto) AS total 
-                FROM u154726602_equipos.facturacion 
+                FROM ${url_base}.facturacion 
                 WHERE estado LIKE '%pagado%'
             `);
             res.status(200).json({ total: rows[0].total || 0 });
@@ -166,7 +186,7 @@ const facturacionController = {
         try {
             const [rows] = await promisePool.query(`
                 SELECT SUM(monto) AS total 
-                FROM u154726602_equipos.facturacion 
+                        FROM ${url_base}.facturacion 
                 WHERE estado LIKE '%pendiente%'
             `);
             res.status(200).json({ total: rows[0].total || 0 });
@@ -178,7 +198,7 @@ const facturacionController = {
         try {
             const [rows] = await promisePool.query(`
                 SELECT SUM(monto) AS total 
-                FROM u154726602_equipos.entrada 
+                FROM ${url_base}.entrada 
             `);
             res.status(200).json({ total: rows[0].total || 0 });
         } catch (error) {
@@ -189,17 +209,29 @@ const facturacionController = {
         try {
             const [rows] = await promisePool.query(`
                 SELECT 
-    (SELECT COALESCE(SUM(monto), 0) FROM u154726602_equipos.entrada) -
-    (SELECT COALESCE(SUM(monto), 0) FROM u154726602_equipos.facturacion WHERE estado LIKE '%pagado%') AS total;
+    (SELECT COALESCE(SUM(monto), 0) FROM ${url_base}.entrada) -
+    (SELECT COALESCE(SUM(monto), 0) FROM ${url_base}.facturacion WHERE estado LIKE '%pagado%') AS total;
             `);
             res.status(200).json({ total: rows[0].total || 0 });
         } catch (error) {
             res.status(500).json({ error: `Error en la base de datos: ${error.message}` });
         }
     },
+    totalCajaPrioritario: async (req, res) => {
+        try {
+            const [rows] = await promisePool.query(`
+                SELECT (SELECT COALESCE(SUM(monto), 0) FROM ${url_base}.entrada) - (SELECT COALESCE(SUM(monto), 0) 
+                FROM ${url_base}.facturacion WHERE estado LIKE '%pagado%') - (SELECT COALESCE(SUM(monto), 0) FROM ${url_base}.facturacion WHERE 
+                estado LIKE '%pendiente%' && prioridad = true) AS totalPrioritario;
+            `);
+            res.status(200).json({ totalPrioritario: rows[0].totalPrioritario || 0 });
+        } catch (error) {
+            res.status(500).json({ error: `Error en la base de datos: ${error.message}` });
+        }
+    },
     getAllEntradas: async (req, res) => {
         try {
-            const [rows] = await promisePool.query('SELECT * FROM u154726602_equipos.entrada');
+            const [rows] = await promisePool.query(`SELECT * FROM ${url_base}.entrada`);
             res.status(200).json(rows);
         } catch (error) {
             res.status(500).json({ error: `Error en la base de datos: ${error.message}` });
@@ -211,7 +243,7 @@ const facturacionController = {
         try {
             // Paso 1: Obtener el estado actual
             const [rows] = await promisePool.query(
-                'SELECT estado FROM u154726602_equipos.facturacion WHERE idfacturacion = ?',
+                `SELECT estado FROM ${url_base}.facturacion WHERE idfacturacion = ?`,
                 [idfacturacion]
             );
 
@@ -234,7 +266,7 @@ const facturacionController = {
 
             // Paso 3: Actualizar el registro
             const [result] = await promisePool.query(
-                'UPDATE u154726602_equipos.facturacion SET estado = ? WHERE idfacturacion = ?',
+                        `UPDATE ${url_base}.facturacion SET estado = ? WHERE idfacturacion = ?`,
                 [nuevoEstado, idfacturacion]
             );
 
@@ -261,21 +293,29 @@ const facturacionController = {
             // Iniciar transacción
             await promisePool.query('START TRANSACTION');
 
-            // 1. Copiar datos a historial
-            const queryCopiar = `
-            INSERT INTO historial (idfacturacion, fecha, monto, observacion, mes)
-            SELECT idfacturacion, fecha, monto, observacion, ? 
-            FROM facturacion
-        `;
-            await promisePool.query(queryCopiar, [mes]);
+            // 1) Copiar a historial solo las facturas pagadas
+            const queryCopiarPagadas = `
+                INSERT INTO ${url_base}.historial (idfacturacion, fecha, monto, observacion, mes)
+                SELECT idfacturacion, fecha, monto, observacion, ? 
+                FROM ${url_base}.facturacion
+                WHERE estado LIKE '%pagado%'
+            `;
+            const [insertResult] = await promisePool.query(queryCopiarPagadas, [mes]);
 
-            // 2. Vaciar tabla facturacion
-            await promisePool.query('TRUNCATE TABLE facturacion');
+            // 2) Eliminar de facturacion solo las pagadas
+            const [deleteResult] = await promisePool.query(
+                `DELETE FROM ${url_base}.facturacion WHERE estado LIKE '%pagado%'`
+            );
 
             // Confirmar transacción
             await promisePool.query('COMMIT');
 
-            res.status(200).json({ success: true, message: 'Mes cerrado correctamente' });
+            res.status(200).json({ 
+                success: true, 
+                message: 'Mes cerrado correctamente (solo facturas pagadas archivadas y eliminadas)',
+                archivadas: insertResult.affectedRows || 0,
+                eliminadas: deleteResult.affectedRows || 0
+            });
         } catch (error) {
             // Revertir en caso de error
             await promisePool.query('ROLLBACK');
@@ -284,68 +324,98 @@ const facturacionController = {
         }
     },
     cerrarCaja: async (req, res) => {
-        const { mes } = req.body;
+        const { mes, user } = req.body;
+        
+        // Validaciones básicas
+        if (!mes || typeof mes !== 'string') {
+            return res.status(400).json({ success: false, message: 'Mes inválido' });
+        }
+        if (!user || typeof user !== 'string') {
+            return res.status(400).json({ success: false, message: 'Usuario inválido' });
+        }
+    
         try {
             // Iniciar transacción
             await promisePool.query('START TRANSACTION');
     
-            // 1. Obtener el total de caja
-            const [totalRows] = await promisePool.query(`
-                SELECT 
-                    (SELECT COALESCE(SUM(monto), 0) FROM entrada) -
-                    (SELECT COALESCE(SUM(monto), 0) FROM facturacion WHERE estado LIKE '%pagado%') AS total
-            `);
-            const totalCaja = totalRows[0].total || 0;
+            // 1️⃣ Obtener suma de facturas pagadas del mes
+            const [paidSumRows] = await promisePool.query(
+                    `SELECT COALESCE(SUM(monto), 0) AS totalPagado
+                    FROM ${url_base}.facturacion
+                    WHERE estado LIKE '%pagado%'
+                    FOR UPDATE`,
+                [url_base]
+            );
+            const totalPagadoMes = paidSumRows[0].totalPagado || 0;
     
-            // 2. Copiar datos a historial
-            const queryCopiar = `
-                INSERT INTO historialCaja (fecha, monto)
-                SELECT fecha, monto
-                FROM entrada;
-            `;
-            await promisePool.query(queryCopiar, [totalCaja]);
+            // 2️⃣ Copiar facturas pagadas del mes al historial
+            const [insertFacturas] = await promisePool.query(
+                `INSERT INTO ${url_base}.historial (idfacturacion, fecha, monto, observacion, mes)
+                 SELECT idfacturacion, fecha, monto, observacion, ?
+                 FROM ${url_base}.facturacion
+                 WHERE estado LIKE '%pagado%'`,
+                [mes] // ejemplo: ['agosto', 8]
+              );
+              
     
-            // 3. Vaciar tabla entrada
-            await promisePool.query('TRUNCATE TABLE entrada');
+            // 3️⃣ Eliminar facturas pagadas del mes
+            const [deleteFacturas] = await promisePool.query(
+                `DELETE FROM ${url_base}.facturacion
+                 WHERE estado LIKE '%pagado%'`,
+                [url_base]
+            );
     
-            // 4. Insertar el total como nuevo registro en entrada (si es necesario)
-            // Esto depende de tus requisitos, aquí un ejemplo:
-            await promisePool.query(`
-                INSERT INTO entrada (fecha, monto)
-                VALUES (NOW(), ?)
-            `, [totalCaja]);
-            await promisePool.query('START TRANSACTION');
-
-            // 1. Copiar datos a historial
-            const queryCopiarenHistorial = `
-            INSERT INTO historial (idfacturacion, fecha, monto, observacion, mes)
-            SELECT idfacturacion, fecha, monto, observacion, ? 
-            FROM facturacion
-        `;
-            await promisePool.query(queryCopiarenHistorial, [mes]);
-
-            // 2. Vaciar tabla facturacion
-            await promisePool.query('TRUNCATE TABLE facturacion');
-
-            // Confirmar transacción
+            // 4️⃣ Obtener total de entradas actuales
+            const [entradaSumRows] = await promisePool.query(
+                `SELECT COALESCE(SUM(monto), 0) AS totalEntrada
+                 FROM ${url_base}.entrada FOR UPDATE`,
+                [url_base]
+            );
+            const totalEntrada = entradaSumRows[0].totalEntrada || 0;
+    
+            // 5️⃣ Calcular saldo final de caja
+            const totalCaja = totalEntrada - totalPagadoMes;
+    
+            // 6️⃣ Copiar entradas al historial de caja
+            await promisePool.query(
+                `INSERT INTO ${url_base}.historialCaja (fecha, monto, motivo)
+                 SELECT fecha, monto, motivo FROM ${url_base}.entrada`,
+                [url_base, url_base]
+            );
+    
+            // 7️⃣ Limpiar tabla de entradas
+            await promisePool.query(`TRUNCATE TABLE ?? .entrada`, [url_base]);
+    
+            // 8️⃣ Registrar saldo arrastrado
+            await promisePool.query(
+                `INSERT INTO ?? .entrada (fecha, monto, username, motivo)
+                 VALUES (NOW(), ?, ?, 'Saldo que viene del mes anterior')`,
+                [url_base, totalCaja, user || 'sistema']
+            );
+    
+            // Confirmar cambios
             await promisePool.query('COMMIT');
     
-            res.status(200).json({ 
-                success: true, 
+            res.status(200).json({
+                success: true,
                 message: 'Caja cerrada correctamente',
-                totalCaja: totalCaja
+                totalCaja,
+                facturasArchivadas: insertFacturas?.affectedRows || 0,
+                facturasEliminadas: deleteFacturas?.affectedRows || 0
             });
+    
         } catch (error) {
-            // Revertir en caso de error
             await promisePool.query('ROLLBACK');
             console.error('Error al cerrar caja:', error);
-            res.status(500).json({ 
-                success: false, 
+            res.status(500).json({
+                success: false,
                 message: 'Error al cerrar la caja',
-                error: error.message 
+                error: error.message
             });
         }
     }
+    
+
 };
 
 

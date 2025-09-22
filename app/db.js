@@ -11,6 +11,7 @@ const promisePool = mysql.createPool({
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
     waitForConnections: true,
+     charset: "utf8mb4",
     connectionLimit: 10, // Límite de conexiones simultáneas
     queueLimit: 0 // No limitar la cantidad de consultas en cola
 });

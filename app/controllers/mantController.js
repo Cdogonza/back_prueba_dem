@@ -1,9 +1,9 @@
 const db = require('../db.js'); // Importar conexión a la base de datos
-
+const url_base = process.env.NODE_ENV === 'development' ? "u154726602_equipos_test" : "u154726602_equipos";
 // Obtener todos los equipos
 exports.getAllmentenimientos = async (req, res) => {
     try {
-        const [results] = await db.promise().query('SELECT * FROM u154726602_equipos.mantenimientos');
+        const [results] = await db.query(`SELECT * FROM ${url_base}.mantenimientos`);
         res.json(results);
     } catch (err) {
         res.status(500).json({ error: 'Error al obtener los equipos', details: err.message });
@@ -19,7 +19,7 @@ exports.getMantenimientoById = async (req, res) => {
             return res.status(400).json({ message: 'IDD inválido' });
         }
 
-        const [results] = await db.promise().query('SELECT * FROM u154726602_equipos.mantenimientos WHERE id = ?', [id]);
+        const [results] = await db.query(`SELECT * FROM ${url_base}.mantenimientos WHERE id = ?`, [id]);
 
         if (results.length === 0) {
             return res.status(404).json({ message: 'Mantenimiento no encontrado' });
@@ -48,14 +48,14 @@ exports.updateMantenimientoById = async (req, res) => {
         }
 
         // Verificar si el mantenimiento existe antes de intentar actualizarlo
-        const [results] = await db.promise().query('SELECT * FROM u154726602_equipos.mantenimientos WHERE id = ?', [id]);
+        const [results] = await db.query(`SELECT * FROM ${url_base}.mantenimientos WHERE id = ?`, [id]);
 
         if (results.length === 0) {
             return res.status(404).json({ message: 'Procedimiento no encontrado' });
         }
 
         // Realizar la actualización
-        await db.promise().query('UPDATE u154726602_equipos.mantenimientos SET nombre = ?, empresa = ?, numero = ?, desde = ?,hasta = ? WHERE id = ?', [nombre, empresa, numero,desde,hasta, id]);
+        await db.query(`UPDATE ${url_base}.mantenimientos SET nombre = ?, empresa = ?, numero = ?, desde = ?,hasta = ? WHERE id = ?`, [nombre, empresa, numero,desde,hasta, id]);
 
         // Responder con un mensaje de éxito
         res.json({ message: 'Procedimiento actualizado correctamente' });
@@ -69,7 +69,7 @@ exports.updateMantenimientoById = async (req, res) => {
 exports.deleteMantenimiento = async (req, res) => {
     try {
         const { id } = req.params;
-        const [results] = await db.promise().query('DELETE FROM u154726602_equipos.mantenimientos WHERE id = ?', [id]);
+        const [results] = await db.query(`DELETE FROM ${url_base}.mantenimientos WHERE id = ?`, [id]);
 
         if (results.affectedRows === 0) {
             return res.status(404).json({ message: 'Procedimiento no encontrado' });
@@ -91,7 +91,7 @@ exports.getMantenimientosBeforeDate = async (req, res) => {
         }
 
         // Realizar la consulta para obtener mantenimientos con fecha menor a la proporcionada
-        const [results] = await db.promise().query('SELECT * FROM u154726602_equipos.mantenimientos WHERE hasta < ?', [hasta]);
+        const [results] = await db.query(`SELECT * FROM ${url_base}.mantenimientos WHERE hasta < ?`, [hasta]);
 
         if (results.length === 0) {
             return res.status(404).json({ message: 'No se encontraron mantenimientos antes de la fecha proporcionada' });
