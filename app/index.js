@@ -13,6 +13,7 @@ const equipamientoRoutes = require('./routes/equipamiento');
 const motoresRoutes = require('./routes/motores');
 
 const equipamiento_equiposRoutes = require('./routes/equipamiento_equiposRoutes');
+const mantenimientosRoutes = require('./routes/mantenimientos');
 
 const e = require('express');
 
@@ -67,6 +68,7 @@ app.use('/api/documentos', documentos);
 app.use('/api/equipamiento', equipamientoRoutes);
 app.use('/api/motores', motoresRoutes);
 app.use('/api/equipamiento_equipos', equipamiento_equiposRoutes);
+app.use('/api/mantenimientos', mantenimientosRoutes);
 
 // Ruta de prueba al final para evitar conflictos
 app.get('/api', (req, res) => {
