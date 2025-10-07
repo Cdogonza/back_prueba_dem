@@ -6,13 +6,12 @@ const dotenv = require('dotenv');
 const authRoutes = require('./routes/authroutes');
 const equposRoutes = require('./routes/equipos');
 const novedadesRoutes = require('./routes/novedades');
-const mantenmientos = require('./routes/mantenimientos');
 const facturacion = require('./routes/facturacion');
 const secretaria = require('./routes/secretaria');
 const documentos = require('./routes/documentos');
 const equipamientoRoutes = require('./routes/equipamiento');
 const motoresRoutes = require('./routes/motores');
-const mantenimientoRoutes = require('./routes/mantenimiento');
+
 const equipamiento_equiposRoutes = require('./routes/equipamiento_equiposRoutes');
 
 const e = require('express');
@@ -62,13 +61,11 @@ db.connect(err => {
 app.use('/api/equipos', equposRoutes);
 app.use('/api/novedades', novedadesRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/api/mantenimientos', mantenmientos);
 app.use('/api/facturacion', facturacion);
 app.use('/api/secretaria',secretaria);
 app.use('/api/documentos', documentos);
 app.use('/api/equipamiento', equipamientoRoutes);
 app.use('/api/motores', motoresRoutes);
-app.use('/api/mantenimiento', mantenimientoRoutes);
 app.use('/api/equipamiento_equipos', equipamiento_equiposRoutes);
 
 // Ruta de prueba al final para evitar conflictos

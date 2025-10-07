@@ -8,7 +8,7 @@ require('dotenv').config();
 const SALT_ROUNDS = 10; // Seguridad en bcrypt
 const TOKEN_EXPIRATION = '24h'; // Tiempo de expiración del token
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4200';
-
+const url_base = process.env.NODE_ENV === 'development' ? "u154726602_equipos_test" : "u154726602_equipos";
 const authController = {
     login: async (req, res) => {
         try {
@@ -26,7 +26,7 @@ const authController = {
           let results;
           try {
             [results] = await db.query(
-              'SELECT id, username, email, password FROM u154726602_equipos.users WHERE username = ?',
+              `SELECT id, username, email, password FROM ${url_base}.users WHERE username = ?`,
               [username.trim()]
             );
           } catch (dbError) {
@@ -117,7 +117,7 @@ const authController = {
 
             // Verificar si el usuario ya existe
             const [existingUser] = await db.query(
-                'SELECT id FROM u154726602_equipos.users WHERE username = ? OR email = ?',
+                `SELECT id FROM ${url_base}.users WHERE username = ? OR email = ?`,
                 [username, email]
             );
 
@@ -130,7 +130,7 @@ const authController = {
 
             // Insertar usuario en la base de datos
             await db.query(
-                'INSERT INTO u154726602_equipos.users (username, password, email) VALUES (?, ?, ?)',
+                `INSERT INTO ${url_base}.users (username, password, email) VALUES (?, ?, ?)`,
                 [username, hashedPassword, email]
             );
 
@@ -150,7 +150,7 @@ const authController = {
                 return res.status(400).json({ message: "El correo electrónico es obligatorio y debe ser válido." });
             }
     
-            const [results] = await db.query('SELECT * FROM u154726602_equipos.users WHERE email = ?', [email]);
+            const [results] = await db.query(`SELECT * FROM ${url_base}.users WHERE email = ?`, [email]);
     
             if (results.length === 0) {
                 return res.status(404).json({ message: "Usuario no encontrado." });
@@ -163,7 +163,7 @@ const authController = {
             const hashedPassword = await bcrypt.hash(defaultPassword, SALT_ROUNDS);
             
             // Actualizar la contraseña en la base de datos
-            await db.query('UPDATE u154726602_equipos.users SET password = ? WHERE email = ?', [hashedPassword, email]);
+            await db.query(`UPDATE ${url_base}.users SET password = ? WHERE email = ?`, [hashedPassword, email]);
             
             res.status(200).json({ 
                 message: "Contraseña reseteada correctamente a '123456'.",
@@ -200,7 +200,7 @@ const authController = {
             const userId = decoded.id;
     
             // Buscar usuario
-            const [results] = await db.query('SELECT * FROM u154726602_equipos.users WHERE id = ?', [userId]);
+            const [results] = await db.query(`SELECT * FROM ${url_base}.users WHERE id = ?`, [userId]);
             if (results.length === 0) {
                 return res.status(404).json({ message: "Usuario no encontrado." });
             }
@@ -218,7 +218,7 @@ const authController = {
             const hashedNewPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
     
             // Actualizar en base de datos
-            await db.query('UPDATE u154726602_equipos.users SET password = ? WHERE id = ?', [hashedNewPassword, userId]);
+            await db.query(`UPDATE ${url_base}.users SET password = ? WHERE id = ?`, [hashedNewPassword, userId]);
     
             return res.status(200).json({ message: "Contraseña cambiada correctamente." });
     
@@ -234,7 +234,7 @@ const authController = {
             console.log(id)
             const SALT_ROUNDS = parseInt(process.env.SALT_ROUNDS || '10');
             const hashedNewPassword = await bcrypt.hash('123456', SALT_ROUNDS);
-            await db.query('UPDATE u154726602_equipos.users SET password = ? WHERE id = ?', [hashedNewPassword, id]);
+            await db.query(`UPDATE ${url_base}.users SET password = ? WHERE id = ?`, [hashedNewPassword, id]);
     
             return res.status(200).json({ message: "Contraseña cambiada correctamente." });
 
@@ -248,7 +248,7 @@ const authController = {
       },
     getUsers : async (req, res) => {
         try {
-            const [results] = await db.query('SELECT id, username, email FROM u154726602_equipos.users');
+            const [results] = await db.query(`SELECT id, username, email FROM ${url_base}.users`);
             if (results.length === 0) {
                 return res.status(404).json({ message: 'No se encontraron usuarios.' });
             }
@@ -284,7 +284,7 @@ const authController = {
             const hashedNewPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
     
             // Actualizar en base de datos
-            await db.query('UPDATE u154726602_equipos.users SET password = ? WHERE id = ?', [hashedNewPassword, userId]);
+            await db.query(`UPDATE ${url_base}.users SET password = ? WHERE id = ?`, [hashedNewPassword, userId]);
     
             return res.status(200).json({ message: "Contraseña actualizada correctamente." });
     
@@ -297,7 +297,7 @@ const authController = {
         try {
             const { id } = req.body;
             console.log(id)
-            await db.query('DELETE FROM u154726602_equipos.users WHERE id = ?', [id]);
+            await db.query(`DELETE FROM ${url_base}.users WHERE id = ?`, [id]);
             res.status(200).json({ message: "Usuario eliminado correctamente." });
         } catch (err) {
             console.error('Error en deleteUser:', err);
@@ -309,7 +309,7 @@ const authController = {
             const { username, email } = req.body.user;
             const {id} = req.params;
 
-            await db.query('UPDATE u154726602_equipos.users SET username = ?, email = ? WHERE id = ?', [username, email, id]);
+            await db.query(`UPDATE ${url_base}.users SET username = ?, email = ? WHERE id = ?`, [username, email, id]);
             res.status(200).json({ message: "Usuario actualizado correctamente." });
         } catch (err) {
             console.error('Error en updateUser:', err);
