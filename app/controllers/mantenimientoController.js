@@ -47,7 +47,7 @@ exports.createMantenimiento = async (req, res) => {
         const camposPermitidos = [
             'MEMO', 'TIPO_NRO_PROC', 'OBJETO', 'APIA', 'RESOLUCION', 
             'MONTO_INICIADO', 'EMPRESA', 'MONTO_FINAL', 'INICIO', 'FIN', 
-            'DURACION', 'PERIODICIDAD', 'OBS', 'DATOS_RELEVANTES', 'PRORROGA','ES_PRORROGA'
+            'DURACION', 'PERIODICIDAD', 'OBS', 'DATOS_RELEVANTES', 'PRORROGA', 'ES_PRORROGA', 'BIBLORATO'
         ];
 
         const datosParaInsertar = {};
@@ -115,7 +115,7 @@ exports.updateMantenimiento = async (req, res) => {
             'MEMO', 'TIPO_NRO_PROC', 'OBJETO', 'APIA', 'RESOLUCION', 
             'MONTO_INICIADO', 'EMPRESA', 'MONTO_FINAL', 'INICIO', 'FIN', 
             'DURACION', 'PERIODICIDAD', 'OBS', 'DATOS_RELEVANTES', 'PRORROGA',
-            'ES_PRORROGA'
+            'ES_PRORROGA', 'BIBLORATO'
         ];
 
         const datosParaActualizar = {};
