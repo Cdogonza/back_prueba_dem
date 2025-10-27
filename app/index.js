@@ -23,18 +23,19 @@ dotenv.config();
 
 app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*"); // Permitir todas las orígenes
+    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     next();
 });
 app.use(cors({
     origin: ['http://localhost:4200','http://10.50.50.50'], // Permitir solicitudes desde este origen
-    methods: 'GET,POST,PUT,DELETE,OPTIONS', // Métodos permitidos
+    methods: 'GET,POST,PUT,DELETE,PATCH,OPTIONS', // Métodos permitidos
     credentials: true // Permitir credenciales si es necesario
 }));
 
 app.options('*', (req, res) => {
     res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.header("Access-Control-Allow-Methods", "GET, PATCH, POST, PUT, DELETE, OPTIONS");
     res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
     res.sendStatus(200);
 });

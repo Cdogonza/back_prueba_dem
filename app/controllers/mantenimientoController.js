@@ -1,6 +1,28 @@
 const db = require('../db.js'); // Importar conexión a la base de datos
 const url_base = process.env.NODE_ENV === 'development' ? "u154726602_equipos_test" : "u154726602_equipos";
 
+// Función para convertir fechas ISO a formato MySQL
+const convertirFechaParaMySQL = (fecha) => {
+    if (!fecha) return fecha;
+    
+    // Si es una fecha ISO (contiene 'T' y 'Z'), convertirla
+    if (typeof fecha === 'string' && (fecha.includes('T') || fecha.includes('Z'))) {
+        try {
+            const fechaObj = new Date(fecha);
+            // Verificar que la fecha es válida
+            if (isNaN(fechaObj.getTime())) {
+                return fecha; // Retornar la fecha original si no es válida
+            }
+            // Convertir a formato YYYY-MM-DD
+            return fechaObj.toISOString().split('T')[0];
+        } catch (error) {
+            return fecha; // Retornar la fecha original si hay error
+        }
+    }
+    
+    return fecha;
+};
+
 // Obtener todos los mantenimientos
 exports.getAllMantenimientos = async (req, res) => {
     try {
@@ -25,7 +47,7 @@ exports.createMantenimiento = async (req, res) => {
         const camposPermitidos = [
             'MEMO', 'TIPO_NRO_PROC', 'OBJETO', 'APIA', 'RESOLUCION', 
             'MONTO_INICIADO', 'EMPRESA', 'MONTO_FINAL', 'INICIO', 'FIN', 
-            'DURACION', 'PERIODICIDAD', 'OBS', 'DATOS_RELEVANTES', 'PRORROGA'
+            'DURACION', 'PERIODICIDAD', 'OBS', 'DATOS_RELEVANTES', 'PRORROGA','ES_PRORROGA'
         ];
 
         const datosParaInsertar = {};
@@ -33,7 +55,14 @@ exports.createMantenimiento = async (req, res) => {
         // Solo incluir campos que están presentes en la petición
         camposPermitidos.forEach(campo => {
             if (nuevoMantenimiento.hasOwnProperty(campo)) {
-                datosParaInsertar[campo] = nuevoMantenimiento[campo];
+                let valor = nuevoMantenimiento[campo];
+                
+                // Convertir fechas si es necesario
+                if (campo === 'INICIO' || campo === 'FIN') {
+                    valor = convertirFechaParaMySQL(valor);
+                }
+                
+                datosParaInsertar[campo] = valor;
             }
         });
 
@@ -81,11 +110,12 @@ exports.updateMantenimiento = async (req, res) => {
             return res.status(404).json({ message: 'Mantenimiento no encontrado' });
         }
 
-        // Preparar los campos para la actualización
+        // Preparar los campos para la actualización (todos son opcionales)
         const camposPermitidos = [
             'MEMO', 'TIPO_NRO_PROC', 'OBJETO', 'APIA', 'RESOLUCION', 
             'MONTO_INICIADO', 'EMPRESA', 'MONTO_FINAL', 'INICIO', 'FIN', 
-            'DURACION', 'PERIODICIDAD', 'OBS', 'DATOS_RELEVANTES', 'PRORROGA'
+            'DURACION', 'PERIODICIDAD', 'OBS', 'DATOS_RELEVANTES', 'PRORROGA',
+            'ES_PRORROGA'
         ];
 
         const datosParaActualizar = {};
@@ -93,7 +123,14 @@ exports.updateMantenimiento = async (req, res) => {
         // Solo incluir campos que están presentes en la petición
         camposPermitidos.forEach(campo => {
             if (mantenimientoActualizado.hasOwnProperty(campo)) {
-                datosParaActualizar[campo] = mantenimientoActualizado[campo];
+                let valor = mantenimientoActualizado[campo];
+                
+                // Convertir fechas si es necesario
+                if (campo === 'INICIO' || campo === 'FIN') {
+                    valor = convertirFechaParaMySQL(valor);
+                }
+                
+                datosParaActualizar[campo] = valor;
             }
         });
 
@@ -105,7 +142,8 @@ exports.updateMantenimiento = async (req, res) => {
 
         res.json({ 
             message: 'Mantenimiento actualizado correctamente',
-            updatedFields: Object.keys(datosParaActualizar)
+            updatedFields: Object.keys(datosParaActualizar),
+            updatedData: datosParaActualizar
         });
     } catch (err) {
         res.status(500).json({ error: 'Error al actualizar el mantenimiento', details: err.message });
@@ -167,5 +205,37 @@ exports.getMantenimientosByDateRange = async (req, res) => {
         res.json(results);
     } catch (err) {
         res.status(500).json({ error: 'Error al obtener mantenimientos por rango de fechas', details: err.message });
+    }
+};
+
+// Alternar el valor de PRORROGA (true/false)
+exports.toggleProrroga = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Verificar que el mantenimiento existe
+        const [checkResults] = await db.query(`SELECT id_mantenimiento, PRORROGA FROM ${url_base}.mantenimientos WHERE id_mantenimiento = ?`, [id]);
+        
+        if (checkResults.length === 0) {
+            return res.status(404).json({ message: 'Mantenimiento no encontrado' });
+        }
+
+        const valorActual = checkResults[0].PRORROGA;
+        const nuevoValor = valorActual ? 0 : 1;
+
+        // Actualizar el valor de PRORROGA
+        const [results] = await db.query(
+            `UPDATE ${url_base}.mantenimientos SET PRORROGA = ? WHERE id_mantenimiento = ?`, 
+            [nuevoValor, id]
+        );
+
+        res.json({ 
+            message: 'PRORROGA actualizada correctamente',
+            id_mantenimiento: id,
+            valorAnterior: valorActual,
+            valorNuevo: nuevoValor
+        });
+    } catch (err) {
+        res.status(500).json({ error: 'Error al alternar PRORROGA', details: err.message });
     }
 };

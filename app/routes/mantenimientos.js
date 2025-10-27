@@ -23,4 +23,7 @@ router.get('/empresa/:empresa', mantenimientoController.getMantenimientosByEmpre
 // Obtener mantenimientos por rango de fechas
 router.get('/fechas/rango', mantenimientoController.getMantenimientosByDateRange);
 
+// Alternar PRORROGA (true/false)
+router.patch('/:id/toggle-prorroga', mantenimientoController.toggleProrroga);
+
 module.exports = router;
